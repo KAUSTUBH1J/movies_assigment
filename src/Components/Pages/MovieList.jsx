@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import {handleFavourteMovies} from '../../function/AddmovieToFavourite';
+import { toast } from 'react-toastify';
 
 export default function MovieList() {
 
@@ -7,8 +8,9 @@ export default function MovieList() {
   const [loading, setLoading]       = useState(false);
   const [pageNumber, setPageNumber] = useState(1);
   const [FavMovie, setFavMovie]     = useState([]);
-  
+  const [search, setSearch]         = useState('');
   useEffect(()=>{
+    
     console.log('useEffect call');
     setLoading(false);
     GetMovies();
@@ -36,13 +38,18 @@ export default function MovieList() {
   const GetMovies = async() =>{
     setLoading(false);
     try {
-      const response = await fetch(`https://api.themoviedb.org/3/movie/popular?page=${pageNumber}&api_key=4386492ef1543992adb4d2af9679d7ec`);
+      const response = await fetch(`https://api.themoviedb.org/3/movie/popular?page=${pageNumber}&api_key=4386492ef1543992adb4d2af9679d7ec  `);
       const data = await response.json();
-      console.log(data);
-      setMovies(data.results);
+      console.log(data.status_code);
+      if(data.status_code){
+        toast.error(data.status_message);
+      }else{
+        setMovies(data.results);
+      }
       setLoading(true);
     } catch (error) {
-      console.warn('Error :'+error)
+      toast.error("Enable to Fetch Movie list !")
+      console.warn('Error :'+error);
     }
   }
 
@@ -57,29 +64,43 @@ export default function MovieList() {
       release_date  : movie.release_date
     };
 
-    handleFavourteMovies(TempArry,id);
+    const result = handleFavourteMovies(TempArry,false,id);
     handleFavMovieState();
+
+    if(result === 'Added'){
+      toast.success("Movies Added to Favorite list!")
+    }else if(result === 'Removed'){
+      toast.error("Movies Remove to Favorite list!")
+    }
   } 
+  const handleInputSearch = (e) =>{
+    const value = e.target.value;
+    setSearch(value);
+  }
 
-  // const handleFavourteMovies = (movie,id) => {
+  const searchHandle = () =>{
+    GetMovies();
+    console.log('searchHandle call '+search);
+    let data = [];
+    const value = search;
+    data = movies.filter((mov)=>{
+      let title = mov.title.toLowerCase();
+      if(title.includes(value.toLowerCase())){
+        return true;
+      }else{
+        return false;
+      }
+    })
     
-  //   if(localStorage.getItem('FavouriteMovie')){
+    console.log(data)
+    if(search.length === 0){
+      GetMovies();
+    }else{
+      setMovies(data);
+    }
+    
+  }
 
-  //     let localData =  JSON.parse(localStorage.getItem('FavouriteMovie'));
-      
-  //     if(localData.some((fav)=>fav.id === id)){
-  //       localData = localData.filter(mov => mov.id !== id);
-  //     }else{
-  //       localData.push(movie);
-  //     }
-  //     localStorage.setItem('FavouriteMovie', JSON.stringify(localData));
-  //     setFavMovie(localData);
-
-  //   }else{
-  //     localStorage.setItem('FavouriteMovie', JSON.stringify([movie]));
-  //     setFavMovie([movie]);
-  //   }
-  // }
 
   return (
     <>
@@ -89,10 +110,10 @@ export default function MovieList() {
        
         <div className='m-3 '>
           <div className='d-flex flex-row-reverse mb-3'>
-            <form className="d-flex w-30" role="search">
-              <input className="form-control me-2" type="search" placeholder="Search" aria-label="Search"/>
-              <button className="btn btn-outline-success" type="submit">Search</button>
-            </form> 
+            <div className="d-flex w-30" role="search">
+              <input className="form-control me-2" type="search" placeholder="Search" aria-label="Search" value={search} onChange={handleInputSearch}/>
+              <button className="btn btn-outline-success"  onClick={searchHandle}>Search</button>
+            </div> 
           </div>
           {
             !loading? "Loading...": 
@@ -107,7 +128,7 @@ export default function MovieList() {
               </tr>
             </thead>
             <tbody>
-              { movies.map((item,intex)=>{
+              { movies ? movies.map((item,intex)=>{
                 const isFavorite = FavMovie.length !== 0 ? FavMovie.some((fav) => fav.id === item.id) :'';
                 return(
                   <tr key={item.id}>
@@ -126,7 +147,9 @@ export default function MovieList() {
                     </td>
                   </tr>
                 )
-              })}
+              }):(<tr>
+                  <td colSpan='5'>No Data Found</td>
+                </tr>)}
             </tbody>
           </table></>
           }

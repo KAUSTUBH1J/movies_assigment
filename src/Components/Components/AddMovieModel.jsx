@@ -1,21 +1,22 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { handleFavourteMovies } from '../../function/AddmovieToFavourite';
+import { toast } from 'react-toastify';
 
-export default function MovieCard(props) {
-  const [movie, setMovie] = useState({
+export default function AddmovieModel(props) {
+
+  const initialValues = {
     title         : '',
     release_year  : '',
     overview      : ''
-  })
-  const initialValues = movie;
-
-  const onSubmit = values =>{
-    console.log('form Submitted');
-    console.log(values);
   };
 
+  const onSubmit = values =>{
+    handleFavourteMovies(values,true);
+    toast.success("Movies Added to Favorite list!");
+    handleHidePopUp();
+  };
 
   const date = new Date();
   const currentYear  = date.getFullYear();
@@ -27,17 +28,12 @@ export default function MovieCard(props) {
 
   const formik = useFormik({
     initialValues,
-    // validate,
     validationSchema,
     onSubmit
   })
-
+  
   const handleHidePopUp = () =>{
-    setMovie({
-      title         : '',
-      release_year  : '',
-      overview      : ''
-    });
+    formik.resetForm();
     props.hideModel();
   }
 
@@ -54,7 +50,8 @@ export default function MovieCard(props) {
                 </button>
               </div>
               <div className="modal-body">
-                <div className=' '>
+                <div className=''>
+
                   <form onSubmit={formik.handleSubmit}>
                     <div className="mb-3">
                       <label htmlFor="title" className="form-label">Title</label>
@@ -75,6 +72,7 @@ export default function MovieCard(props) {
                       <button className='btn btn-primary' type='submit'>Submit</button>
                     </div>
                   </form>
+
                 </div>
               </div>
             </div>

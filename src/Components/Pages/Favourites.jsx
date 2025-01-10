@@ -1,24 +1,36 @@
 import React,{useEffect, useState} from 'react'
 import AddMovieModel from '../Components/AddMovieModel';
+import {RemoveFavourteMovies} from '../../function/AddmovieToFavourite'
+import { toast } from 'react-toastify';
+
 export default function Favourites() {
     const [loading, setLoading]     = useState(false);
     const [movies, setMovies]       = useState([]);
     const [showModel, setShowModel] = useState(false);
 
     useEffect(()=>{
+        setFavHandle();
+    },[]);
+
+    const setFavHandle = ()=>{
         if(localStorage.getItem('FavouriteMovie')){
             let data =  JSON.parse(localStorage.getItem('FavouriteMovie'));
             setMovies(data);
             setLoading(true);   
         }
-    },[]);
-
+    }
     const ShowModel = () =>{
         setShowModel(true)
     }
     
     const hideModel = () =>{
         setShowModel(false);
+        setFavHandle();
+    }
+    const HandleRemove  = (unique_id) =>{
+        RemoveFavourteMovies(unique_id);
+        setFavHandle();
+        toast.error("Movies Remove to Favorite list!");
     }
     
     const DeleteFavMovie = (id) =>{
@@ -61,17 +73,17 @@ export default function Favourites() {
               { movies.map((item,intex)=>{
                 
                 return(
-                  <tr key={item.id}>
+                  <tr key={item.unique_id}>
                     <th colSpan="row">{intex+1}</th>
-                    <td>{item.title}</td>
+                    <td>{item.title} </td>
                     <td>{item.release_date.slice(0,4)}</td>
                     <td>{item.overview.length >= 100 ? item.overview.slice(0,100)+'...' :item.overview}</td>
                     <td className='d-flex'>
                       <button className='btn btn-primary m-1' style={{'padding': '2px 8px'}} > 
                         <i className="fa-regular fa-pen-to-square"></i>
                       </button>
-                      <button className='btn btn-danger m-1'  style={{'padding': '2px 8px'}}   onClick={()=>DeleteFavMovie(item.id)}> 
-                        <i className="fa-solid fa-trash"></i>
+                      <button className='btn btn-danger m-1'  style={{'padding': '2px 8px'}}   onClick={()=>HandleRemove(item.unique_id)}> 
+                        <i class="fa-solid fa-xmark"></i>
                       </button>
                     </td>
                   </tr>
