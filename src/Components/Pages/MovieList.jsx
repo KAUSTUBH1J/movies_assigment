@@ -9,14 +9,20 @@ export default function MovieList() {
   const [pageNumber, setPageNumber] = useState(1);
   const [FavMovie, setFavMovie]     = useState([]);
   const [search, setSearch]         = useState('');
+  const APIKey = '4386492ef1543992adb4d2af9679d7ec';
+  const [displayData, setDisplayData] = useState([]);
+
   useEffect(()=>{
-    
-    console.log('useEffect call');
     setLoading(false);
     GetMovies();
     handleFavMovieState();
+    setLoading(true);
   },[]);
 
+  const HandleDisplaydata = ()=>{
+    console.log('handleDisplaydata call',movies)
+    setDisplayData(movies);
+  }
 
   const handleFavMovieState = () =>{
     console.log('handleFavMovieState call');
@@ -25,30 +31,35 @@ export default function MovieList() {
       setFavMovie(data);
     }
   }
+
   const handlepage = (action) =>{
     console.log('handlepage Function call '+action);
-    if(action=='Next'){
+    if(action === 'Next'){
       setPageNumber(pageNumber+1);
     }else if(action === 'Previous' ){
       setPageNumber(pageNumber-1);
     }
     GetMovies();
+    HandleDisplaydata();
+    setSearch('');
   }
 
   const GetMovies = async() =>{
     setLoading(false);
     try {
-      const response = await fetch(`https://api.themoviedb.org/3/movie/popular?page=${pageNumber}&api_key=4386492ef1543992adb4d2af9679d7ec  `);
+      const response = await fetch(`https://api.themoviedb.org/3/movie/popular?page=${pageNumber}&api_key=${APIKey}`);
       const data = await response.json();
-      console.log(data.status_code);
+      // console.log(data.status_code);
+
       if(data.status_code){
         toast.error(data.status_message);
       }else{
         setMovies(data.results);
+        setDisplayData(data.result);
       }
       setLoading(true);
     } catch (error) {
-      toast.error("Enable to Fetch Movie list !")
+      toast.error("Enable to Fetch Movie list!")
       console.warn('Error :'+error);
     }
   }
@@ -61,16 +72,16 @@ export default function MovieList() {
       id            : movie.id,
       title         : movie.title,
       overview      : movie.overview,
-      release_date  : movie.release_date
+      release_year  : movie.release_date
     };
 
     const result = handleFavourteMovies(TempArry,false,id);
     handleFavMovieState();
 
-    if(result === 'Added'){
+    if(result.action === 'Added' ){
       toast.success("Movies Added to Favorite list!")
-    }else if(result === 'Removed'){
-      toast.error("Movies Remove to Favorite list!")
+    }else if(result.action === 'Removed'){
+      toast.warn("Movies Remove to Favorite list!")
     }
   } 
   const handleInputSearch = (e) =>{
@@ -79,7 +90,7 @@ export default function MovieList() {
   }
 
   const searchHandle = () =>{
-    GetMovies();
+    // GetMovies();
     console.log('searchHandle call '+search);
     let data = [];
     const value = search;
@@ -94,9 +105,9 @@ export default function MovieList() {
     
     console.log(data)
     if(search.length === 0){
-      GetMovies();
+      setDisplayData(movies);
     }else{
-      setMovies(data);
+      setDisplayData(data);
     }
     
   }
@@ -124,11 +135,11 @@ export default function MovieList() {
                 <th colSpan="col">Title</th>
                 <th colSpan="col">Release Year</th>
                 <th colSpan="col">Overview </th>
-                <th colSpan="col">Action </th>
+                <th colSpan="col">Favourite </th>
               </tr>
             </thead>
             <tbody>
-              { movies ? movies.map((item,intex)=>{
+              { displayData ? displayData.map((item,intex)=>{
                 const isFavorite = FavMovie.length !== 0 ? FavMovie.some((fav) => fav.id === item.id) :'';
                 return(
                   <tr key={item.id}>
